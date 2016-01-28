@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using NAudio.Wave.SampleProviders;
 using NAudio.Wave;
+using System.Diagnostics;
 
 namespace KinectTheremin.ThereminAudio
 {
@@ -13,29 +14,28 @@ namespace KinectTheremin.ThereminAudio
     {
         private Thread _playbackThread;
 
-        private SignalGenerator _signalGenerator;
+        private ContinuousSineWaveProvider _waveProvider;
         private bool IsPlaying = true;
 
         public double Frequency
         {
-            get { return _signalGenerator.Frequency; }
-            set { _signalGenerator.FrequencyEnd = value; }
+            get { return _waveProvider.Frequency; }
+            set { _waveProvider.Frequency = value; }
         }
 
         public AudioPlaybackThread()
         {
             _playbackThread = new Thread(new ThreadStart(DoAudioPlayback));
-            _signalGenerator = new SignalGenerator();
+            _waveProvider = new ContinuousSineWaveProvider();
 
-            _signalGenerator.Frequency = 440;
-            _signalGenerator.Gain = .5;
-            _signalGenerator.SweepLengthSecs = .02;
+            _waveProvider.Frequency = 200;
+            _waveProvider.Gain = .5;
         }
 
         public double Gain
         {
-            get { return _signalGenerator.Gain; }
-            set { _signalGenerator.Gain = value; }
+            get { return _waveProvider.Gain; }
+            set { _waveProvider.Gain = value; }
         }
 
         public void StartAudioPlayback()
@@ -54,8 +54,8 @@ namespace KinectTheremin.ThereminAudio
         {
             var waveOut = new WaveOut();
 
-            waveOut.DesiredLatency = 50;
-            waveOut.Init(_signalGenerator);
+            waveOut.DesiredLatency = 80;
+            waveOut.Init(_waveProvider);
 
             waveOut.Play();
 
@@ -75,12 +75,10 @@ namespace KinectTheremin.ThereminAudio
         private double _sampleRate;
 
         //How far through one period to start the wave
-        private double _startPhase;
+        private double _phaseOffset;
         private WaveFormat _waveFormat;
 
         private double _gain;
-
-        private WaveFormat Wave
 
         public WaveFormat WaveFormat
         {
@@ -112,25 +110,29 @@ namespace KinectTheremin.ThereminAudio
             }
         }
 
-        public ContinuousSineWaveProvider(int sampleRate, int channels)
+        public ContinuousSineWaveProvider()
         {
-            _waveFormat = WaveFormat.CreateIeeeFloatWaveFormat(sampleRate, channels);
+            Debug.WriteLine("Setting up audio!");
+            _waveFormat = WaveFormat.CreateIeeeFloatWaveFormat(44100, 2);
         }
         
         public int Read(float[] buffer, int offset, int count)
         {
             var samplesWritten = 0;
-           
-            for (var sampleNum = 0; sampleNum > count; sampleNum++)
+                 
+            for (var sampleNum = 0; sampleNum < count; sampleNum++)
             {
-                var timeDelta = sampleNum / 44100 + _startPhase / _currFreq;
-                var sampleValue = (float) Math.Sin(2 * Math.PI * _currFreq * timeDelta);
-                buffer[sampleNum] = sampleValue;
+                var timeDelta = (double) sampleNum / 44100 + _phaseOffset / _currFreq;
+                float sampleValue = (float) (_gain * Math.Sin(2 * Math.PI * _currFreq * timeDelta));
+                buffer[sampleNum + offset] = sampleValue;
                 samplesWritten++;
             }
 
             //Set the starting phase for next time
-            _startPhase = _startPhase + (samplesWritten);
+            var readTime = (double) count / 44100;
+
+            _phaseOffset += (readTime * _currFreq) % 1;
+
             return samplesWritten;
         }
     }

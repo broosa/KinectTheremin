@@ -32,9 +32,9 @@ namespace KinectTheremin
         private AudioPlaybackThread _playbackThread;
 
         private const double MAX_HAND_DISTANCE = 1.0;
-        private const double MIN_GAIN = .2;
+        private const double MIN_GAIN = .1;
         private const double METERS_PER_SEMITONE = .05;
-        private const double MIN_FREQUENCY = 400;
+        private const double MIN_FREQUENCY = 200;
 
         public MainWindow()
         {
