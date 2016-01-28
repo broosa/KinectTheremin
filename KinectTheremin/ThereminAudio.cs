@@ -72,9 +72,20 @@ namespace KinectTheremin.ThereminAudio
     {
         private double _currFreq;
         private double _lastFreq;
+        private double _sampleRate;
+
+        //How far through one period to start the wave
         private double _startPhase;
+        private WaveFormat _waveFormat;
 
         private double _gain;
+
+        private WaveFormat Wave
+
+        public WaveFormat WaveFormat
+        {
+            get { return _waveFormat; }
+        }
 
         public double Frequency
         {
@@ -101,17 +112,19 @@ namespace KinectTheremin.ThereminAudio
             }
         }
 
-        public ContinuousSineWaveProvider(int sampleRate, int channels) : base(44100, 2)
+        public ContinuousSineWaveProvider(int sampleRate, int channels)
         {
-
+            _waveFormat = WaveFormat.CreateIeeeFloatWaveFormat(sampleRate, channels);
         }
         
         public int Read(float[] buffer, int offset, int count)
         {
             var samplesWritten = 0;
+           
             for (var sampleNum = 0; sampleNum > count; sampleNum++)
             {
-                var sampleValue = (float) Math.Sin((_startPhase + (2 * Math.PI * _currFreq * sampleNum)) / 44100);
+                var timeDelta = sampleNum / 44100 + _startPhase / _currFreq;
+                var sampleValue = (float) Math.Sin(2 * Math.PI * _currFreq * timeDelta);
                 buffer[sampleNum] = sampleValue;
                 samplesWritten++;
             }
