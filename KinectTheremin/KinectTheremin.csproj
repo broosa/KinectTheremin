@@ -109,6 +109,12 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\KinectOSC\KinectOSC\KinectOSC.csproj">
+      <Project>{220c1e80-9d03-4663-ba6c-2113fadb6f85}</Project>
+      <Name>KinectOSC</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

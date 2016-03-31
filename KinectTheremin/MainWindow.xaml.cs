@@ -18,6 +18,7 @@ using System.Runtime.CompilerServices;
 using Microsoft.Kinect;
 
 using KinectTheremin.ThereminAudio;
+using KinectOSC.Networking;
 
 namespace KinectTheremin
 {
@@ -29,7 +30,8 @@ namespace KinectTheremin
     {
         private KinectSensor _kinect;
         private MultiSourceFrameReader _frameReader;
-        private AudioPlaybackThread _playbackThread;
+        //private AudioPlaybackThread _playbackThread;
+        private KinectOscClient _oscClient;
 
         private const double MAX_HAND_DISTANCE = 1.0;
         private const double MIN_GAIN = .1;
@@ -66,13 +68,16 @@ namespace KinectTheremin
                 Debug.WriteLine("Kinect not working!");
             }
 
-            _playbackThread = new AudioPlaybackThread();
-            _playbackThread.StartAudioPlayback();
+            this._oscClient = new KinectOscClient("127.0.0.1", 7002);
+            this._oscClient.IsRunning = true;
+            //_playbackThread = new AudioPlaybackThread();
+            //_playbackThread.StartAudioPlayback();
         }
 
         protected void MainWindow_Closing(object sender, CancelEventArgs e)
         {
-            _playbackThread.StopAudioPlayback();
+            //_playbackThread.StopAudioPlayback();
+            _oscClient.IsRunning = false;
         }
 
         protected void MainWindow_KinectFrameArrived(object sender, MultiSourceFrameArrivedEventArgs e)
@@ -126,7 +131,10 @@ namespace KinectTheremin
                         var rightY = rightHandJoint.Position.Y;
                         var rightZ = rightHandJoint.Position.Z;
 
-                        var dX = Math.Abs(rightX - leftX);
+                        _oscClient.UpdateJointPosition(KinectOscClient.JointType.LeftHand, leftX, leftY, leftZ);
+                        _oscClient.UpdateJointPosition(KinectOscClient.JointType.RightHand, rightX, rightY, rightZ);
+
+                        /*var dX = Math.Abs(rightX - leftX);
                         var dY = Math.Abs(rightY - leftY);
                         var dZ = Math.Abs(rightZ - leftZ);
 
@@ -156,6 +164,7 @@ namespace KinectTheremin
 
                         _playbackThread.Frequency = frequency;
                         _playbackThread.Gain = gain;
+                        */
                     }                   
                 }
             }
